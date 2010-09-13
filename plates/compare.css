@@ -1,0 +1,132 @@
+html{color:#000;background:#FFF;}
+body,div,dl,dt,dd,h1,h2,h3,h4,h5,h6,code,form,input,button,textarea,p{margin:0;padding:0;}
+img{border:0;}
+code,em,strong{font-style:inherit;font-weight:inherit;}
+h1,h2,h3,h4,h5,h6{font-size:100%;font-weight:normal;}
+input,button,select,option{font-family:inherit;font-size:inherit;font-style:inherit;font-weight:inherit;}
+input,button,select{font-size:100%;}
+
+/*-------------------------------------*/
+html {
+  background:#F4EBC3;
+  color:#AB526B;
+}
+
+body {
+  font-size:16px;
+  padding-bottom:10px;
+}
+
+hr {
+  border:none;
+  border-top: 2px solid #C5CEAE;
+  margin: 10px 20px;
+}
+
+h1 {
+  font-size:1.8em;
+  font-weight:bold;
+}
+
+h2 {
+  font-size:1.5em;
+}
+
+h4 {
+  font-size:.8em;
+}
+
+#container {
+  width:960px;
+  margin-top:20px;
+  margin-left:auto;
+  margin-right:auto;
+  background:#C5CEAE;
+  background-position:right;
+  background-repeat:no-repeat;
+
+  padding:10px 20px 20px 10px;
+
+  -moz-border-radius: 10px;
+  border-radius: 10px;
+}
+
+#header_container {
+  line-height:250%;
+  width:900px;
+  margin-left:auto;
+  margin-right:auto;
+
+  background:#C5CEAE;
+}
+
+#header_container h2 {
+  padding-top:5px;
+  padding-left:20px;
+}
+
+.sub_container {
+  margin-left:15px;
+  background:none;
+  
+}
+
+.tagbox {
+  background:#F0E2A4;
+
+  margin:5px 10px 0px 0px;
+  padding:8px 0px 8px 10px;
+
+  overflow:hidden;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+
+  color:#000000;
+}
+
+.header_list {
+  margin-top:10px;
+  overflow:hidden;
+}
+
+.hidden {
+  display:none;
+}
+
+.header_list code {
+  display:block;
+}
+
+.header_link {
+  color:#BCA297;
+  padding-top:2px;
+  float:right;
+  width:100px;
+}
+
+/* index-only tags */
+
+#i_container {
+  padding: 10px 0px 10px 20px;
+}
+
+#load_container {
+  float:right;
+  width:100px;
+  height:100px;
+  margin-right:250px;
+
+  background:#C5CEAE url("loading.gif");
+  background-repeat:no-repeat;
+}
+
+#address_box {
+  width:400px;
+}
+
+#submit_me {
+  border:1px solid #F4EBC3;
+  padding:2px 5px;
+  color:#AB526B;
+  background:#C5bEAE;
+}

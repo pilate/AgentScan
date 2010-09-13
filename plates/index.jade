@@ -1,0 +1,19 @@
+!!! strict
+
+html(xmlns="http://www.w3.org/1999/xhtml",lang="en")
+  head
+    title Browser Agent Scan
+    meta(http-equiv="Content-Type",content="text/html;charset=utf-8")
+    link(rel="stylesheet", type="text/css", href="plates/compare.css")
+  body
+    #container
+      #header_container
+        h1 Enter an address to scan
+        form(method="post", action="scan", id="url_form")
+          #load_container.hidden
+          #i_container
+            p
+              input(type="text", name="sts", id="address_box")
+          p
+            input(type="submit", value="Start Scan", id="submit_me")
+    script(type="text/javascript",src="plates/compare.js")

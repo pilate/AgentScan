@@ -1,0 +1,44 @@
+!!! strict
+
+- var iterate_obj = function (next_element) {
+  - var browser_tags = function (tag_list) {
+    - for (var tag_num in tag_list) {
+      code #{tag_list[tag_num]}
+    - }
+  - }
+  - for (var element_num in next_element) {
+    .sub_container
+      - for (var current_crc in next_element[element_num]) {
+        - if (current_crc !== "children") {
+          .tagbox
+            .header_link
+              h4 [Show Headers]
+            code= next_element[element_num][current_crc].tag
+            div.header_list.hidden
+              hr
+              - browser_tags(next_element[element_num][current_crc].id_list)
+        - }
+      - }
+      - if (next_element[element_num].children) {
+        - iterate_obj(next_element[element_num].children)
+      - }
+  - }
+- }
+
+html(xmlns="http://www.w3.org/1999/xhtml",lang="en")
+  head
+    title Comparison Results
+    meta(http-equiv="Content-Type",content="text/html;charset=utf-8")
+    link(rel="stylesheet", type="text/css", href="plates/compare.css")
+    :javascript
+      | var header_count = #{ header_count };
+      | var min_headers = #{ min_headers };
+  body
+    #container
+      #header_container
+        h1 Comparison Results for:
+        h2= tested_page
+        h3 #{header_count} Headers checked. ${diff_pages} page(s) found.
+
+      - iterate_obj(diff_obj)
+    script(type="text/javascript",src="plates/compare.js")
