@@ -249,6 +249,8 @@ AgentServer.prototype.StartServer = function () {
   var http_server = http.createServer(function (request, response) {
     var static_file, post_url, AS;
     var post_data = "";
+    // Daring Fireball URL regex
+    var url_regex = /\b(([\w-]+:\/\/?|www[.])[^\s()<>]+(?:\([\w\d]+\)|([^[:punct:]\s]|\/)))/i;
 
     // Render index request
     if (request.method === "GET") {
@@ -277,18 +279,19 @@ AgentServer.prototype.StartServer = function () {
       });
       request.on("end", function () {
         // read url from post data; parse
-        post_url = url.parse(unescape(post_data).substr(4));
-        // parser only splits urls with protocol
-        if (post_url.host === undefined) {
-        //post_url = url.parse("http://" + unescape(post_data).substr(4));
-        }
-        if (post_url.host) {
+        post_url = unescape(post_data).substr(4);
+
+        // Check if url matches regex
+        if (url_regex.test(post_url) || url_regex.test(post_url + "/")) {
+
           // Run agent scanner on url
-          AS = new AgentScanner(post_url, response);
+          AS = new AgentScanner(url.parse(post_url), response);
           AS.ReadAgents();
           AS.AgentScan();
         }
         else {
+          // Malformed URL, abort
+          // todo: real error page?
           response.writeHead(200, {
             "Content-Type": "text/html"
           });
