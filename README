@@ -1,0 +1,13 @@
+AgentScan is an application that allows you to visually compare pages returned from a URL when making a request with different "User-Agent" headers.
+
+AgentScan.js currently contains all configuration options, such as port. (Default: 9900)
+
+"agents/" folder contains a few User-Agent lists for use with the app.
+
+
+
+Todo:
+
+     Move configuration options out of AgentScan.js
+     Real 404 Template
+     Real Error Template     
