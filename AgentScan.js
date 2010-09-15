@@ -6,27 +6,21 @@ var crc = require("./lib/crc32");
 var nodehtml = require("./lib/node-htmlparser");
 var objcompare = require("./lib/objcompare");
 var jade = require("./lib/jade");
-var spawn = require('child_process').spawn;
+var spawn = require("child_process").spawn;
+
+var config = require("./config").CONFIG;
 
 var AgentServer = function () {
-  this.server_port = 9900;
   this.static_cache = {};
-
-  this.working_dir = "/htmlcomp"
 };
 
 var AgentScanner = function (test_url, response_obj) {
-  this.agent_file = "./agents/agents_common.txt";
-  this.max_connections = 100;
-
   this.compare_object = new objcompare.Comparator();
   this.agent_list = [];
   this.checksum_list = {};
   this.connection_count = 0;
   this.split_url = test_url;
   this.response_object = response_obj;
-
-//console.log(url.format(test_url));
 };
 
 // Format results for output
@@ -93,7 +87,7 @@ AgentScanner.prototype.OutputResults = function () {
 
 // Read agents into array from file
 AgentScanner.prototype.ReadAgents = function () {
-  var raw_agents = fs.readFileSync(this.agent_file, "ascii");
+  var raw_agents = fs.readFileSync(config.agent_file, "ascii");
   this.agent_list = raw_agents.replace(/\r/g,"").split("\n");
 };
 
@@ -129,7 +123,7 @@ AgentScanner.prototype.GetPage = function (browser_agent) {
   };
 
 // Rate limiting
-  if (this.connection_count === this.max_connections) {
+  if (this.connection_count === config.max_connections) {
     process.nextTick(function () {
       that.GetPage(browser_agent);
     });
@@ -218,7 +212,7 @@ AgentServer.prototype.GetStaticFile = function (try_file) {
   var response_code, return_buffer;
   var content_type = "text/html";
 
-  try_file = try_file.replace(this.working_dir, "");
+  try_file = try_file.replace(config.working_dir, "");
 
   // Check if file is acceptable, check working dir (hackish)
   if (try_file in accepted_files) {
@@ -253,7 +247,7 @@ AgentServer.prototype.StartServer = function () {
     // Render index request
     if (request.method === "GET") {
       // hackish directory handling for reverse proxy
-      if (request.url === "/" || request.url === that.working_dir + "/") {
+      if (request.url === "/" || request.url === config.working_dir + "/") {
         response.writeHead(200, {
           "Content-Type": "text/html"
         });
@@ -270,7 +264,7 @@ AgentServer.prototype.StartServer = function () {
       }
     }
     // Handle submissions
-    else if ((request.method === "POST") && (request.url.replace(that.working_dir, "") === "/scan")) {
+    else if ((request.method === "POST") && (request.url.replace(config.working_dir, "") === "/scan")) {
       // Collect all data before starting
       request.on("data", function (chunk) {
         post_data = post_data + chunk;
@@ -297,9 +291,10 @@ AgentServer.prototype.StartServer = function () {
       });
     }
   });
-  http_server.listen(parseInt(this.server_port, 10));
+  console.log(config.port_number);
+  http_server.listen(parseInt(config.port_number, 10));
 
-  console.log("HTTP Server started on port " + this.server_port + ".");
+  console.log("HTTP Server started on port " + config.port_number + ".");
 };
 
 var AServer = new AgentServer();

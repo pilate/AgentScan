@@ -8,6 +8,6 @@ AgentScan.js currently contains all configuration options, such as port. (Defaul
 
 Todo:
 
-     Move configuration options out of AgentScan.js
-     Real 404 Template
-     Real Error Template     
+     Finish thread-lines for visual element flow
+     404 Template
+     Error Template     
