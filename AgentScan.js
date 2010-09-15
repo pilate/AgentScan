@@ -291,7 +291,6 @@ AgentServer.prototype.StartServer = function () {
       });
     }
   });
-  console.log(config.port_number);
   http_server.listen(parseInt(config.port_number, 10));
 
   console.log("HTTP Server started on port " + config.port_number + ".");
