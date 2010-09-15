@@ -16,7 +16,7 @@ var AgentServer = function () {
 };
 
 var AgentScanner = function (test_url, response_obj) {
-  this.agent_file = "./agents/agents_small.txt";
+  this.agent_file = "./agents/agents_common.txt";
   this.max_connections = 100;
 
   this.compare_object = new objcompare.Comparator();
@@ -26,7 +26,7 @@ var AgentScanner = function (test_url, response_obj) {
   this.split_url = test_url;
   this.response_object = response_obj;
 
-  console.log(url.format(test_url));
+//console.log(url.format(test_url));
 };
 
 // Format results for output
@@ -34,7 +34,7 @@ AgentScanner.prototype.OutputResults = function () {
   var key_count = 0;
   var min_tags = 0;
   var agent_count;
-  var self = this;
+  var that = this;
 
   for (var key in this.checksum_list) {
     key_count = key_count + 1;
@@ -46,7 +46,7 @@ AgentScanner.prototype.OutputResults = function () {
     }
   }
 
-  self.response_object.writeHead(200, {
+  this.response_object.writeHead(200, {
     "Content-Type": "text/html",
     "Content-Encoding": "gzip"
   });
@@ -73,16 +73,15 @@ AgentScanner.prototype.OutputResults = function () {
     };
 
     var new_file = random_data(6);
-    // gzip before sending response
-    //  (node+gzip stdio was broken)
+    // gzip before sending response (node+gzip stdio was broken)
     fs.writeFile(new_file, html, function (err) {
       var gzip = spawn("gzip", ["-9", new_file]);
 
       // read gzipped file when program exits
-      gzip.on("exit", function (code) {
+      gzip.on("exit", function () {
         fs.readFile(new_file + ".gz", function (err, data) {
           // send gzipped data and delete file
-          self.response_object.end(data);
+          that.response_object.end(data);
           fs.unlinkSync(new_file + ".gz");
         });
       });
@@ -101,11 +100,9 @@ AgentScanner.prototype.ReadAgents = function () {
 // Move these to private? Probably
 AgentScanner.prototype.AddConnection = function () {
   this.connection_count = this.connection_count + 1;
-
 };
 AgentScanner.prototype.RemConnection = function () {
   this.connection_count = this.connection_count - 1;
-
 };
 
 // Add checksum to array; create array on first entry
@@ -123,16 +120,18 @@ AgentScanner.prototype.AppendChecksum = function (browser_agent, checksum) {
 // Get page using the user-agent parameter
 AgentScanner.prototype.GetPage = function (browser_agent) {
   var out_url;
-  var self = this;
+  var that = this;
+
   // Generic error function
   var ConnectionError = function () {
-    self.AppendChecksum(browser_agent, "Error");
-    self.RemConnection();
+    that.AppendChecksum(browser_agent, "Error");
+    that.RemConnection();
   };
-  // Rate limiting
-  if (self.connection_count === self.max_connections) {
+
+// Rate limiting
+  if (this.connection_count === this.max_connections) {
     process.nextTick(function () {
-      self.GetPage(browser_agent);
+      that.GetPage(browser_agent);
     });
     return;
   }
@@ -145,7 +144,7 @@ AgentScanner.prototype.GetPage = function (browser_agent) {
   this.AddConnection();
 
   // Create new outgoing request
-  var new_client = http.createClient(this.split_url.port || 80, this.split_url.host || "localhost");
+  var new_client = http.createClient(this.split_url.port || 80, this.split_url.host);
   var new_request = new_client.request("GET", out_url || "/",
   {
     "Host":this.split_url.host,
@@ -170,10 +169,10 @@ AgentScanner.prototype.GetPage = function (browser_agent) {
       var handler, parser;
       var page_checksum = crc.crc32(complete_data);
 
-      self.RemConnection();
+      that.RemConnection();
       
       // Keep list of page checksums
-      self.AppendChecksum(browser_agent, page_checksum);
+      that.AppendChecksum(browser_agent, page_checksum);
 
       // Handler for html parser
       handler = new nodehtml.DefaultHandler(function () {},
@@ -185,11 +184,11 @@ AgentScanner.prototype.GetPage = function (browser_agent) {
       parser.parseComplete(complete_data);
 
       // Run diff, use browser_agent as an 'id'
-      self.compare_object.DoDiff(handler.dom, browser_agent);
+      that.compare_object.DoDiff(handler.dom, browser_agent);
 
       // Last connection closed, call finisher
-      if (self.connection_count === 0) {
-        self.OutputResults();
+      if (that.connection_count === 0) {
+        that.OutputResults();
       }
     });
     response.on("error", ConnectionError);
@@ -235,7 +234,6 @@ AgentServer.prototype.GetStaticFile = function (try_file) {
       this.static_cache[try_file] = return_buffer;
     }
   }
-  // todo: create real 404 template?
   else {
     return_buffer = "Not Found";
     response_code = 404;
@@ -291,7 +289,6 @@ AgentServer.prototype.StartServer = function () {
         }
         else {
           // Malformed URL, abort
-          // todo: real error page?
           response.writeHead(200, {
             "Content-Type": "text/html"
           });

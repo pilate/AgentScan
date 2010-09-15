@@ -139,7 +139,8 @@ Element.prototype.ToggleClass = function (class_name) {
   }
 };
 
-// Format page
+// Main function block
+// Do page formatting
 (function () {
   var index_check = document.getElementById("url_form");
 
