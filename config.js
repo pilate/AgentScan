@@ -3,7 +3,7 @@ var CONFIG = {
   port_number: 9900,
 
   // Maximum number of open connections per scan
-  max_connections: 100,
+  max_connections: 30,
 
   // Text file containing a list of User-Agent headers to test
   agent_file: "agents/agents_common.txt",

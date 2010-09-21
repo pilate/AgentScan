@@ -1,12 +1,12 @@
-var http = require("http");
-//var sys = require("sys");
-var url = require("url");
-var fs = require("fs");
-var crc = require("./lib/crc32");
-var nodehtml = require("./lib/node-htmlparser");
-var objcompare = require("./lib/objcompare");
-var jade = require("./lib/jade");
-var spawn = require("child_process").spawn;
+var http = require("http"),
+url = require("url"),
+fs = require("fs"),
+sys = require("sys"),
+crc = require("./lib/crc32"),
+nodehtml = require("./lib/node-htmlparser"),
+objcompare = require("./lib/objcompare"),
+jade = require("./lib/jade"),
+spawn = require("child_process").spawn;
 
 var config = require("./config").CONFIG;
 
@@ -80,8 +80,8 @@ AgentScanner.prototype.OutputResults = function () {
         });
       });
     });
-  //fs.writeFileSync("results.html", html);
-  //fs.writeFileSync("results2.txt", sys.inspect(self.compare_object.diff_array, false, null));
+    //fs.writeFileSync("results.html", html);
+    //fs.writeFileSync("results2.txt", sys.inspect(that.compare_object.diff_array, false, null));
   });
 };
 
@@ -97,6 +97,10 @@ AgentScanner.prototype.AddConnection = function () {
 };
 AgentScanner.prototype.RemConnection = function () {
   this.connection_count = this.connection_count - 1;
+  // Last connection closed, call finisher
+  if (this.connection_count === 0) {
+    this.OutputResults();
+  }
 };
 
 // Add checksum to array; create array on first entry
@@ -122,7 +126,7 @@ AgentScanner.prototype.GetPage = function (browser_agent) {
     that.RemConnection();
   };
 
-// Rate limiting
+  // Rate limiting
   if (this.connection_count === config.max_connections) {
     process.nextTick(function () {
       that.GetPage(browser_agent);
@@ -154,6 +158,13 @@ AgentScanner.prototype.GetPage = function (browser_agent) {
   new_request.on("response", function (response) {
     var complete_data = "";
 
+    // Adds "location:" redirects to compared DOM as a tag for display purposes
+    /*
+    if (response.headers.location) {
+      complete_data = "<Redirect>Location: " + response.headers.location + "</Redirect>";
+    }
+    */
+   
     // Collect all data before parsing
     response.on("data", function (chunk) {
       complete_data = complete_data + chunk;
@@ -178,12 +189,9 @@ AgentScanner.prototype.GetPage = function (browser_agent) {
       parser.parseComplete(complete_data);
 
       // Run diff, use browser_agent as an 'id'
-      that.compare_object.DoDiff(handler.dom, browser_agent);
+      //that.compare_object.IterateElement(handler.dom, browser_agent, that.compare_object.diff_array);
+    that.compare_object.DoDiff(handler.dom, browser_agent);
 
-      // Last connection closed, call finisher
-      if (that.connection_count === 0) {
-        that.OutputResults();
-      }
     });
     response.on("error", ConnectionError);
   });
