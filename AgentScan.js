@@ -5,6 +5,7 @@ crc = require("./lib/crc32"),
 nodehtml = require("./lib/node-htmlparser"),
 objcompare = require("./lib/objcompare"),
 jade = require("./lib/jade"),
+//sys = require("sys"),
 spawn = require("child_process").spawn;
 
 var config = require("./config").CONFIG;
@@ -14,7 +15,8 @@ var AgentServer = function () {
 };
 
 var AgentScanner = function (test_url, response_obj) {
-  this.compare_object = new objcompare.Comparator();
+  this.page_comparison = new objcompare.Comparator();
+  this.redirect_object = new objcompare.Comparator();
   this.agent_list = [];
   this.checksum_list = {};
   this.connection_count = 0;
@@ -48,7 +50,8 @@ AgentScanner.prototype.OutputResults = function () {
   jade.renderFile("plates/results.jade",
   {
     locals: {
-      diff_obj: this.compare_object.diff_array,
+      diff_obj: this.page_comparison.diff_array,
+      redir_obj: this.redirect_object.diff_array,
       diff_pages: key_count,
       tested_page: url.format(this.split_url),
       header_count: this.agent_list.length,
@@ -66,6 +69,12 @@ AgentScanner.prototype.OutputResults = function () {
     };
 
     var new_file = random_data(6);
+
+    // Dont create file if something went wrong
+    if (!html) {
+      return;
+    }
+
     // gzip before sending response (node+gzip stdio was broken)
     fs.writeFile(new_file, html, function (err) {
       var gzip = spawn("gzip", ["-9", new_file]);
@@ -79,8 +88,8 @@ AgentScanner.prototype.OutputResults = function () {
         });
       });
     });
-  //fs.writeFileSync("results.html", html);
-  //fs.writeFileSync("results2.txt", sys.inspect(that.compare_object.diff_array, false, null));
+  //fs.writeFile("results.html", html);
+  //fs.writeFile("results2.txt", sys.inspect(that.page_comparison.diff_array, false, null));
   });
 };
 
@@ -155,23 +164,28 @@ AgentScanner.prototype.GetPage = function (browser_agent) {
   new_request.end();
 
   new_request.on("response", function (response) {
-    var complete_data = "";
+    var handler, parser;
+    var page_data = "";
 
     // Adds "location:" redirects to compared DOM as a tag for display purposes
-    /*
+
     if (response.headers.location) {
-      complete_data = "<Redirect>Location: " + response.headers.location + "</Redirect>";
+      var redirect_data = "<Redirect>Location: " + response.headers.location + "</Redirect>";
+
+      handler = new nodehtml.DefaultHandler(function () {},{});
+      parser = new nodehtml.Parser(handler);
+      parser.parseComplete(redirect_data);
+      that.redirect_object.DoDiff(handler.dom, browser_agent);
     }
-    */
    
     // Collect all data before parsing
     response.on("data", function (chunk) {
-      complete_data = complete_data + chunk;
+      page_data = page_data + chunk;
     });
 
     response.on("end", function () {
       var handler, parser;
-      var page_checksum = crc.crc32(complete_data);
+      var page_checksum = crc.crc32(page_data);
 
       that.RemConnection();
       
@@ -179,17 +193,15 @@ AgentScanner.prototype.GetPage = function (browser_agent) {
       that.AppendChecksum(browser_agent, page_checksum);
 
       // Handler for html parser
-      handler = new nodehtml.DefaultHandler(function () {},
-      {
+      handler = new nodehtml.DefaultHandler(function () {},{
         ignoreWhitespace: true
-      }
-      );
+      });
       parser = new nodehtml.Parser(handler);
-      parser.parseComplete(complete_data);
+      parser.parseComplete(page_data);
 
       // Run diff, use browser_agent as an 'id'
-      //that.compare_object.IterateElement(handler.dom, browser_agent, that.compare_object.diff_array);
-      that.compare_object.DoDiff(handler.dom, browser_agent);
+      //that.page_comparison.IterateElement(handler.dom, browser_agent, that.page_comparison.diff_array);
+      that.page_comparison.DoDiff(handler.dom, browser_agent);
 
     });
     response.on("error", ConnectionError);
