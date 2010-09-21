@@ -1,7 +1,6 @@
 var http = require("http"),
 url = require("url"),
 fs = require("fs"),
-sys = require("sys"),
 crc = require("./lib/crc32"),
 nodehtml = require("./lib/node-htmlparser"),
 objcompare = require("./lib/objcompare"),
@@ -80,8 +79,8 @@ AgentScanner.prototype.OutputResults = function () {
         });
       });
     });
-    //fs.writeFileSync("results.html", html);
-    //fs.writeFileSync("results2.txt", sys.inspect(that.compare_object.diff_array, false, null));
+  //fs.writeFileSync("results.html", html);
+  //fs.writeFileSync("results2.txt", sys.inspect(that.compare_object.diff_array, false, null));
   });
 };
 
@@ -190,7 +189,7 @@ AgentScanner.prototype.GetPage = function (browser_agent) {
 
       // Run diff, use browser_agent as an 'id'
       //that.compare_object.IterateElement(handler.dom, browser_agent, that.compare_object.diff_array);
-    that.compare_object.DoDiff(handler.dom, browser_agent);
+      that.compare_object.DoDiff(handler.dom, browser_agent);
 
     });
     response.on("error", ConnectionError);
