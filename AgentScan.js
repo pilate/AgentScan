@@ -5,7 +5,7 @@ crc = require("./lib/crc32"),
 nodehtml = require("./lib/node-htmlparser"),
 objcompare = require("./lib/objcompare"),
 jade = require("./lib/jade"),
-sys = require("sys"),
+//sys = require("sys"),
 spawn = require("child_process").spawn;
 
 var config = require("./config").CONFIG;
@@ -187,8 +187,6 @@ AgentScanner.prototype.GetPage = function (browser_agent) {
       var handler, parser;
       var page_checksum = crc.crc32(page_data);
 
-      that.RemConnection();
-      
       // Keep list of page checksums
       that.AppendChecksum(browser_agent, page_checksum);
 
@@ -202,7 +200,9 @@ AgentScanner.prototype.GetPage = function (browser_agent) {
       // Run diff, use browser_agent as an 'id'
       //that.page_comparison.IterateElement(handler.dom, browser_agent, that.page_comparison.diff_array);
       that.page_comparison.DoDiff(handler.dom, browser_agent);
-
+      
+      // End connection as late as possible, output starts at 0
+      that.RemConnection();
     });
     response.on("error", ConnectionError);
   });
@@ -218,40 +218,101 @@ AgentScanner.prototype.AgentScan = function () {
   }
 };
 
-// Returns a static file, content type, and a response code
-AgentServer.prototype.GetStaticFile = function (try_file) {
-  // List of accepted static files and their content type
-  var accepted_files = {
-    "/plates/compare.css": "text/css",
-    "/plates/compare.js": "text/javascript",
-    "/plates/loading.gif": "image/gif"
+// Route page displays, probably not very efficient
+//   handles caching of each template
+AgentServer.prototype.RenderPage = function (page_name, response_object) {
+  var that = this;
+  
+  var ReturnPage = function (response_object, response_data, response_code, content_type) {
+    response_object.writeHead(response_code, {
+      "Content-Type": content_type
+    });
+    response_object.end(response_data, "binary");
   };
 
-  var response_code, return_buffer;
-  var content_type = "text/html";
-
-  try_file = try_file.replace(config.working_dir, "");
-
-  // Check if file is acceptable, check working dir (hackish)
-  if (try_file in accepted_files) {
-    response_code = 200;
-    content_type = accepted_files[try_file];
-    // Check static cache for render
-    if (this.static_cache[try_file]) {
-      return_buffer = this.static_cache[try_file];
-    }
-    else {
-      // Read file and add to cache
-      return_buffer = fs.readFileSync(try_file.substr(1), "binary");
-      this.static_cache[try_file] = return_buffer;
-    }
+  // hackish directory handling for reverse proxy
+  if (page_name === "/" || page_name === config.working_dir + "/") {
+    page_name = "index";
   }
-  else {
-    return_buffer = "Not Found";
-    response_code = 404;
+
+  switch (page_name) {
+    // check cache and render index page
+    case "index":
+      if (this.static_cache.index) {
+        ReturnPage(response_object, this.static_cache.index, 200, "text/html");
+      }
+      else {
+        jade.renderFile("plates/index.jade", {}, function (err, html) {
+          that.static_cache.index = html;
+          ReturnPage(response_object, html, 200, "text/html");
+        });
+      }
+      break;
+    case "error":
+      if (this.static_cache.error) {
+        ReturnPage(response_object, this.static_cache.error, 500, "text/html");
+      }
+      jade.renderFile("plates/error.jade",
+      {
+        locals: {
+          error_message: "A nondescript error occurred."
+        }
+      },
+      function (err, html) {
+        that.static_cache.error = html;
+        ReturnPage(response_object, html, 500, "text/html");
+      });
+
+    // Default handles static files and 404
+    default:
+      // List of accepted static files and their content type
+      var accepted_files = {
+        "/plates/compare.css": "text/css",
+        "/plates/compare.js": "text/javascript",
+        "/plates/loading.gif": "image/gif"
+      };
+
+      var response_code, return_buffer;
+      var content_type = "text/html";
+
+      page_name = page_name.replace(config.working_dir, "");
+
+      // Check if file is acceptable, check working dir (hackish)
+      if (page_name in accepted_files) {
+        response_code = 200;
+        content_type = accepted_files[page_name];
+        // Check static cache for render
+        if (this.static_cache[page_name]) {
+          return_buffer = this.static_cache[page_name];
+        }
+        else {
+          // Read file and add to cache
+          return_buffer = fs.readFileSync(page_name.substr(1), "binary");
+          this.static_cache[page_name] = return_buffer;
+        }
+        ReturnPage(response_object, return_buffer, response_code, content_type);
+      }
+      // Return 404 if not static or index
+      else {
+        if (this.static_cache["404"]) {
+          ReturnPage(response_object, this.static_cache["404"], 404, "text/html");
+        }
+        jade.renderFile("plates/error.jade",
+        {
+          locals: {
+            error_message: "The requested page was not found."
+          }
+        },
+        function (err, html) {
+          that.static_cache["404"] = html;
+          ReturnPage(response_object, html, 404, "text/html");
+        });
+      }
+      break;
   }
-  return [return_buffer, content_type, response_code];
+  
 };
+
 
 AgentServer.prototype.StartServer = function () {
   var that = this;
@@ -264,30 +325,7 @@ AgentServer.prototype.StartServer = function () {
 
     // Render index request
     if (request.method === "GET") {
-      // hackish directory handling for reverse proxy
-      if (request.url === "/" || request.url === config.working_dir + "/") {
-        response.writeHead(200, {
-          "Content-Type": "text/html"
-        });
-        
-        if (that.static_cache.index) {
-          console.log("cached!");
-          response.end(that.static_cache.index);
-        }
-        else {
-          jade.renderFile("plates/index.jade", {}, function (err, html) {
-            that.static_cache.index = html;
-            response.end(html);
-          });
-        }
-      }
-      else {
-        static_file = that.GetStaticFile(request.url);
-        response.writeHead(static_file[2], {
-          "Content-Type": static_file[1]
-        });
-        response.end(static_file[0], "binary");
-      }
+      that.RenderPage(request.url, response);
     }
     // Handle submissions
     else if ((request.method === "POST") && (request.url.replace(config.working_dir, "") === "/scan")) {
@@ -307,21 +345,9 @@ AgentServer.prototype.StartServer = function () {
           AS.ReadAgents();
           AS.AgentScan();
         }
+        // Malformed URL, abort
         else {
-          // Malformed URL, abort
-          response.writeHead(200, {
-            "Content-Type": "text/html"
-          });
-          // Render results template
-          jade.renderFile("plates/error.jade",
-          {
-            locals: {
-              error_message: "Error parsing the requested URL."
-            }
-          },
-          function (err, html) {
-            response.end(html);
-          });
+          that.RenderPage("error", response);
         }
       });
     }

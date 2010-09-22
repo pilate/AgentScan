@@ -1,6 +1,6 @@
 var CONFIG = {
   // Server port
-  port_number: 9901,
+  port_number: 9900,
 
   // Maximum number of open connections per scan
   max_connections: 30,

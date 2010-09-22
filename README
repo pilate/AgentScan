@@ -8,7 +8,7 @@ config.js currently contains all configuration options.
 Todo:
 
     Change template "for each"s to for
-    Make nginx do gzipping
     Finish thread-lines for visual element flow
+    Fix static file links on folder 404's
+    Make nginx do gzipping
     Refactor page rendering
-    404 Template

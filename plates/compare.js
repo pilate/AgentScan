@@ -119,8 +119,8 @@ var COMP = {
           new_color = color_array[code_children - min_headers];
         }
         tagbox.style.border = "2px solid #"+new_color;
-        // Draw thread-lines to visually follow element flow
-        /*
+      // Draw thread-lines to visually follow element flow
+      /*
         if (tagbox.parentNode.getElementsByClassName("sub_container").length != 0 ||
               tagbox.parentNode.parentNode.id == "container") {
           tagbox.parentNode.style.borderLeft = "1px dotted #F4EBC3";
@@ -145,14 +145,18 @@ Element.prototype.ToggleClass = function (class_name) {
 // Do page formatting
 (function () {
   var index_check = document.getElementById("url_form");
+  var error_check = document.getElementsByClassName("error");
 
-  // Javascript for index
+  // Javascript for index page
   if (index_check) {
     index_check.addEventListener("submit", function () {
       document.getElementById("load_container").ToggleClass("hidden");
     }, false);
   }
-  // Javasript for results
+  // Javascript for error page
+  else if (error_check.length) {
+  }
+  // Javasript for results page
   else {
     COMP.SetHeaderEvents();
     COMP.SetTagEvents();
