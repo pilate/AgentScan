@@ -10,5 +10,5 @@ Todo:
     Change template "for each"s to for
     Make nginx do gzipping
     Finish thread-lines for visual element flow
+    Refactor page rendering
     404 Template
-    Error Template

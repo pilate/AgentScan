@@ -8,14 +8,8 @@ html(xmlns="http://www.w3.org/1999/xhtml",lang="en")
   body
     #container
       #header_container
-        h1 Enter an address to scan:
-        form(method="post", action="scan", id="url_form")
-          #load_container.hidden
-          #i_container
-            p
-              input(type="text", name="sts", id="address_box")
-          p
-            input(type="submit", value="Start Scan", id="submit_me")
+        #i_container
+          h1.error #{ error_message }
     #copywrite
       p &copy; 2010 Paul Westin III. All rights reserved.
     script(type="text/javascript",src="plates/compare.js")

@@ -17,12 +17,6 @@ body {
   padding-bottom:10px;
 }
 
-.header_list hr {
-  border:none;
-  border-top: 2px solid #C5CEAE;
-  margin: 10px 20px;
-}
-
 h1 {
   font-size:1.8em;
   font-weight:bold;
@@ -51,7 +45,7 @@ h4 {
   border-radius: 10px;
 }
 
-#container hr {
+#container > hr {
   border:none;
   border-top: 2px solid #F4EBC3;
   margin: 10px 20px;
@@ -81,7 +75,7 @@ h4 {
   background:#F0E2A4;
 
   margin:5px 10px 0px 0px;
-  padding:8px 0px 8px 10px;
+  padding:8px 8px 8px 10px;
 
   overflow:hidden;
   -moz-border-radius: 5px;
@@ -95,12 +89,20 @@ h4 {
   overflow:hidden;
 }
 
+.header_list > hr {
+  border:none;
+  border-top: 2px solid #C5CEAE;
+  margin: 10px 20px;
+}
+
 .hidden {
   display:none;
 }
 
 .header_list code {
+  font-size:12px;
   display:block;
+  white-space:nowrap;
 }
 
 .header_link {
@@ -109,6 +111,19 @@ h4 {
   float:right;
   width:100px;
 }
+
+#copywrite {
+  margin-top:5px;
+  font-size:10px;
+  width:200px;
+  margin-left:auto;
+  margin-right:auto;
+}
+
+.error {
+  margin-top:10px;
+}
+
 
 /* index-only tags */
 

@@ -170,7 +170,7 @@ AgentScanner.prototype.GetPage = function (browser_agent) {
     // Adds "location:" redirects to compared DOM as a tag for display purposes
 
     if (response.headers.location) {
-      var redirect_data = "<Redirect>Location: " + response.headers.location + "</Redirect>";
+      var redirect_data = "<Redirect> Location: " + response.headers.location + "</Redirect>";
 
       handler = new nodehtml.DefaultHandler(function () {},{});
       parser = new nodehtml.Parser(handler);
@@ -217,7 +217,6 @@ AgentScanner.prototype.AgentScan = function () {
     this.GetPage(agent_header);
   }
 };
-
 
 // Returns a static file, content type, and a response code
 AgentServer.prototype.GetStaticFile = function (try_file) {
@@ -270,9 +269,17 @@ AgentServer.prototype.StartServer = function () {
         response.writeHead(200, {
           "Content-Type": "text/html"
         });
-        jade.renderFile("plates/index.jade", {}, function (err, html) {
-          response.end(html);
-        });
+        
+        if (that.static_cache.index) {
+          console.log("cached!");
+          response.end(that.static_cache.index);
+        }
+        else {
+          jade.renderFile("plates/index.jade", {}, function (err, html) {
+            that.static_cache.index = html;
+            response.end(html);
+          });
+        }
       }
       else {
         static_file = that.GetStaticFile(request.url);
@@ -305,7 +312,16 @@ AgentServer.prototype.StartServer = function () {
           response.writeHead(200, {
             "Content-Type": "text/html"
           });
-          response.end("There was a problem parsing the requested url.");
+          // Render results template
+          jade.renderFile("plates/error.jade",
+          {
+            locals: {
+              error_message: "Error parsing the requested URL."
+            }
+          },
+          function (err, html) {
+            response.end(html);
+          });
         }
       });
     }
