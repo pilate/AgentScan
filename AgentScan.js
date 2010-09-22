@@ -5,7 +5,7 @@ crc = require("./lib/crc32"),
 nodehtml = require("./lib/node-htmlparser"),
 objcompare = require("./lib/objcompare"),
 jade = require("./lib/jade"),
-//sys = require("sys"),
+sys = require("sys"),
 spawn = require("child_process").spawn;
 
 var config = require("./config").CONFIG;

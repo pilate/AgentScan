@@ -1,3 +1,5 @@
+// Copyright 2010, Paul Westin III
+
 var COMP = {
     
   // Zero pad a number

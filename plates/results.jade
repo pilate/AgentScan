@@ -40,7 +40,9 @@ html(xmlns="http://www.w3.org/1999/xhtml",lang="en")
         h2= tested_page
         h3 #{header_count} Headers checked. ${diff_pages} page(s) found.
 
-      - iterate_obj(redir_obj)
-      br
+      - if (redir_obj[0] !== undefined) {
+        - iterate_obj(redir_obj);
+        hr
+      - }
       - iterate_obj(diff_obj)
     script(type="text/javascript",src="plates/compare.js")
