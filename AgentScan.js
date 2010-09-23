@@ -7,6 +7,7 @@ objcompare = require("./lib/objcompare"),
 jade = require("./lib/jade"),
 //sys = require("sys"),
 spawn = require("child_process").spawn,
+fade = require("./lib/fade"),
 config = require("./config").CONFIG;
 
 var AGENT_LIST;
@@ -25,7 +26,7 @@ var AgentScanner = function (test_url, response_obj) {
   var connection_count = 0;
 
   this.GetConnections = function () {
-    return connection_count
+    return connection_count;
   };
 
   this.AddConnection = function () {
@@ -62,10 +63,16 @@ AgentScanner.prototype.OutputResults = function () {
     "Content-Encoding": "gzip"
   });
 
+  var steps = AGENT_LIST.length - min_tags;
+
+  // Get fade array of red to green
+  var color_array = fade.GetArray("C90A40", "A7E800", steps || 1);
+  
   // Render results template
   jade.renderFile("plates/results.jade",
   {
     locals: {
+      fade_array: color_array,
       diff_obj: this.page_comparison.diff_array,
       redir_obj: this.redir_comparison.diff_array,
       diff_pages: key_count,

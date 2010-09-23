@@ -9,7 +9,8 @@
   - for (var i = 0, il = next_element.length; i < il; i++) {
     .sub_container
       - for (var j = 0, jl = next_element[i].length; j < jl; j++) {
-        .tagbox
+        - var color_code = next_element[i][j].id_list.length - min_headers || 1
+        .tagbox(style="border:2px solid #" + fade_array[color_code])
           .header_link
             h4 [Show Headers]
           code= next_element[i][j].tag
