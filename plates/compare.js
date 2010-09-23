@@ -1,14 +1,10 @@
 // Copyright 2010, Paul Westin III
 
 var COMP = {
-    
-  // Zero pad a number
-  ZP : function (num,count) {
-    var num_padded = num + "";
-    while(num_padded.length < count) {
-      num_padded = "0" + num_padded;
-    }
-    return num_padded;
+  
+  // Zero pad a color code (cheap but quick)
+  ZP : function (num) {
+    return (num.length == 1) ? "0" + num : num;
   },
     
   // Adds an event to every element with the given class name
@@ -47,7 +43,7 @@ var COMP = {
       }
       // Construct new color code and add to array
       for (var k = 0, kl = new_rgb.length; k < kl; k++) {
-        new_color = new_color + this.ZP(new_rgb[k].toString(16),2);
+        new_color = new_color + this.ZP(new_rgb[k].toString(16));
       }
       color_array.push(new_color);
     }
@@ -95,8 +91,8 @@ var COMP = {
     var tagbox, new_color, code_children, header_list;
     var steps = header_count - min_headers;
     var tagboxes = document.getElementsByClassName("tagbox");
-    // Get fade array of red to green
 
+    // Get fade array of red to green
     var color_array = this.GetFadeArray("C90A40", "A7E800", steps || 1);
 
     for (var i = 0, il = tagboxes.length; i < il; i++) {
@@ -106,12 +102,12 @@ var COMP = {
       //code_children = header_list.children.length - 1;
       code_children = header_list.getElementsByTagName("code").length;
 
-      // Handle pages with only one result
-      if (min_headers === header_count) {
-        new_color = color_array[1];
+      // Check for pages with only one result
+      if (steps !== 0) {
+        new_color = color_array[code_children - min_headers];
       }
       else {
-        new_color = color_array[code_children - min_headers];
+        new_color = color_array[1];
       }
       tagbox.style.border = "2px solid #"+new_color;
     // Draw thread-lines for visual element flow
@@ -138,13 +134,16 @@ Element.prototype.ToggleClass = function (class_name) {
 // Main function block
 // Do page formatting
 (function () {
-  var index_check = document.getElementById("url_form");
-  var error_check = document.getElementsByClassName("error");
+  var loading_element,
+  doc = document,
+  index_check = doc.getElementById("url_form"),
+  error_check = doc.getElementsByClassName("error");
 
   // Javascript for index page
   if (index_check) {
     index_check.addEventListener("submit", function () {
-      document.getElementById("load_container").ToggleClass("hidden");
+      loading_element = doc.getElementById("load_container");
+      loading_element.ToggleClass("hidden");
     }, false);
   }
   // Javascript for error page
