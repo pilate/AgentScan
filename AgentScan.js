@@ -6,9 +6,10 @@ nodehtml = require("./lib/node-htmlparser"),
 objcompare = require("./lib/objcompare"),
 jade = require("./lib/jade"),
 //sys = require("sys"),
-spawn = require("child_process").spawn;
+spawn = require("child_process").spawn,
+config = require("./config").CONFIG;
 
-var config = require("./config").CONFIG;
+var AGENT_LIST;
 
 var AgentServer = function () {
   this.static_cache = {};
@@ -16,12 +17,27 @@ var AgentServer = function () {
 
 var AgentScanner = function (test_url, response_obj) {
   this.page_comparison = new objcompare.Comparator();
-  this.redirect_object = new objcompare.Comparator();
-  this.agent_list = [];
+  this.redir_comparison = new objcompare.Comparator();
   this.checksum_list = {};
-  this.connection_count = 0;
   this.split_url = test_url;
   this.response_object = response_obj;
+
+  var connection_count = 0;
+
+  this.GetConnections = function () {
+    return connection_count
+  };
+
+  this.AddConnection = function () {
+    connection_count = connection_count + 1;
+  };
+  this.RemConnection = function () {
+    connection_count = connection_count - 1;
+    // Last connection closed, call finisher
+    if (connection_count === 0) {
+      this.OutputResults();
+    }
+  };
 };
 
 // Format results for output
@@ -51,10 +67,10 @@ AgentScanner.prototype.OutputResults = function () {
   {
     locals: {
       diff_obj: this.page_comparison.diff_array,
-      redir_obj: this.redirect_object.diff_array,
+      redir_obj: this.redir_comparison.diff_array,
       diff_pages: key_count,
       tested_page: url.format(this.split_url),
-      header_count: this.agent_list.length,
+      header_count: AGENT_LIST.length,
       min_headers: min_tags
     }
   },
@@ -84,7 +100,7 @@ AgentScanner.prototype.OutputResults = function () {
         fs.readFile(new_file + ".gz", function (err, data) {
           // send gzipped data and delete file
           that.response_object.end(data);
-          fs.unlinkSync(new_file + ".gz");
+          fs.unlink(new_file + ".gz", function (err) {});
         });
       });
     });
@@ -93,23 +109,7 @@ AgentScanner.prototype.OutputResults = function () {
   });
 };
 
-// Read agents into array from file
-AgentScanner.prototype.ReadAgents = function () {
-  var raw_agents = fs.readFileSync(config.agent_file, "ascii");
-  this.agent_list = raw_agents.replace(/\r/g,"").split("\n");
-};
 
-// Move these to private? Probably
-AgentScanner.prototype.AddConnection = function () {
-  this.connection_count = this.connection_count + 1;
-};
-AgentScanner.prototype.RemConnection = function () {
-  this.connection_count = this.connection_count - 1;
-  // Last connection closed, call finisher
-  if (this.connection_count === 0) {
-    this.OutputResults();
-  }
-};
 
 // Add checksum to array; create array on first entry
 AgentScanner.prototype.AppendChecksum = function (browser_agent, checksum) {
@@ -135,7 +135,7 @@ AgentScanner.prototype.GetPage = function (browser_agent) {
   };
 
   // Rate limiting
-  if (this.connection_count === config.max_connections) {
+  if (this.GetConnections() === config.max_connections) {
     process.nextTick(function () {
       that.GetPage(browser_agent);
     });
@@ -175,7 +175,7 @@ AgentScanner.prototype.GetPage = function (browser_agent) {
       handler = new nodehtml.DefaultHandler(function () {},{});
       parser = new nodehtml.Parser(handler);
       parser.parseComplete(redirect_data);
-      that.redirect_object.DoDiff(handler.dom, browser_agent);
+      that.redir_comparison.DoDiff(handler.dom, browser_agent);
     }
    
     // Collect all data before parsing
@@ -210,10 +210,10 @@ AgentScanner.prototype.GetPage = function (browser_agent) {
 
 // Main scan loop; Iterate over agents
 AgentScanner.prototype.AgentScan = function () {
-  var agent_count, agent_header;
+  var agent_header;
 
-  for (agent_count in this.agent_list) {
-    agent_header = this.agent_list[agent_count];
+  for (var i = 0, il = AGENT_LIST.length; i < il; i++) {
+    agent_header = AGENT_LIST[i];
     this.GetPage(agent_header);
   }
 };
@@ -262,8 +262,9 @@ AgentServer.prototype.RenderPage = function (page_name, response_object) {
         that.static_cache.error = html;
         ReturnPage(response_object, html, 500, "text/html");
       });
+      break;
 
-    // Default handles static files and 404
+    // Default switch handles static files and 404
     default:
       // List of accepted static files and their content type
       var accepted_files = {
@@ -284,14 +285,17 @@ AgentServer.prototype.RenderPage = function (page_name, response_object) {
         // Check static cache for render
         if (this.static_cache[page_name]) {
           return_buffer = this.static_cache[page_name];
+          ReturnPage(response_object, return_buffer, response_code, content_type);
         }
         else {
           // Read file and add to cache
-          return_buffer = fs.readFileSync(page_name.substr(1), "binary");
-          this.static_cache[page_name] = return_buffer;
+          fs.readFile(page_name.substr(1), "binary", function (err, data) {
+            that.static_cache[page_name] = data;
+            ReturnPage(response_object, data, response_code, content_type);
+          });
         }
-        ReturnPage(response_object, return_buffer, response_code, content_type);
       }
+      
       // Return 404 if not static or index
       else {
         if (this.static_cache["404"]) {
@@ -309,16 +313,14 @@ AgentServer.prototype.RenderPage = function (page_name, response_object) {
         });
       }
       break;
-  }
-  
+  }  
 };
-
 
 AgentServer.prototype.StartServer = function () {
   var that = this;
 
   var http_server = http.createServer(function (request, response) {
-    var static_file, post_url, AS;
+    var post_url, AS;
     var post_data = "";
     // Daring Fireball URL regex
     var url_regex = /\b(([\w-]+:\/\/?|www[.])[^\s()<>]+(?:\([\w\d]+\)|([^[:punct:]\s]|\/)))/i;
@@ -342,7 +344,6 @@ AgentServer.prototype.StartServer = function () {
 
           // Run agent scanner on url
           AS = new AgentScanner(url.parse(post_url), response);
-          AS.ReadAgents();
           AS.AgentScan();
         }
         // Malformed URL, abort
@@ -357,5 +358,14 @@ AgentServer.prototype.StartServer = function () {
   console.log("HTTP Server started on port " + config.port_number + ".");
 };
 
-var AServer = new AgentServer();
-AServer.StartServer();
+// Read agents into array before starting
+fs.readFile(config.agent_file, "ascii", function (err, data) {
+  AGENT_LIST = data.replace(/\r/g,"").split("\n");
+
+  var AServer = new AgentServer();
+  AServer.StartServer();
+});
+
+
+
+

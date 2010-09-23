@@ -2,25 +2,23 @@
 
 - var iterate_obj = function (next_element) {
   - var browser_tags = function (tag_list) {
-    - for (var tag_num in tag_list) {
-      code #{tag_list[tag_num]}
+    - for (var i = 0, il = tag_list.length; i < il; i++) {
+      code #{ tag_list[i] }
     - }
   - }
-  - for (var element_num in next_element) {
+  - for (var i = 0, il = next_element.length; i < il; i++) {
     .sub_container
-      - for (var current_crc in next_element[element_num]) {
-        - if (current_crc !== "children") {
-          .tagbox
-            .header_link
-              h4 [Show Headers]
-            code= next_element[element_num][current_crc].tag
-            div.header_list.hidden
-              hr
-              - browser_tags(next_element[element_num][current_crc].id_list)
-        - }
+      - for (var j = 0, jl = next_element[i].length; j < jl; j++) {
+        .tagbox
+          .header_link
+            h4 [Show Headers]
+          code= next_element[i][j].tag
+          div.header_list.hidden
+            hr
+            - browser_tags(next_element[i][j].id_list)
       - }
-      - if (next_element[element_num].children) {
-        - iterate_obj(next_element[element_num].children)
+      - if (next_element[i].children) {
+        - iterate_obj(next_element[i].children)
       - }
   - }
 - }

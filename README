@@ -7,7 +7,7 @@ config.js currently contains all configuration options.
 
 Todo:
 
-    Change template "for each"s to for
+    Refactor scan results function to use RenderPage
     Finish thread-lines for visual element flow
     Fix static file links on folder 404's
     Make nginx do gzipping

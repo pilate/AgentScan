@@ -15,10 +15,8 @@ var COMP = {
   AddEventToClassName : function (class_name, event_type, event_function) {
     var element_list = document.getElementsByClassName(class_name);
 
-    for (var link_num in element_list) {
-      if (element_list[link_num].addEventListener) {
-        element_list[link_num].addEventListener(event_type, event_function, false);
-      }
+    for (var i = 0, il = element_list.length; i < il; i++) {
+      element_list[i].addEventListener(event_type, event_function, false);
     }
   },
 
@@ -37,7 +35,7 @@ var COMP = {
       // Reset color var
       new_color = "";
       // Find difference between each hex color code
-      for (var j = 0; j < one_rgb.length; j++) {
+      for (var j = 0, jl = one_rgb.length; j < jl; j++) {
         diff_rgb[j] = parseInt(two_rgb[j], 16) - parseInt(one_rgb[j], 16);
         if (diff_rgb[j] !== 0) {
           step_holder = ( diff_rgb[j] / total_steps ) * i;
@@ -48,7 +46,7 @@ var COMP = {
         }
       }
       // Construct new color code and add to array
-      for (var k = 0; k < new_rgb.length; k++) {
+      for (var k = 0, kl = new_rgb.length; k < kl; k++) {
         new_color = new_color + this.ZP(new_rgb[k].toString(16),2);
       }
       color_array.push(new_color);
@@ -82,13 +80,10 @@ var COMP = {
   // Set "show/hide children" event handlers
   SetTagEvents : function () {
     var ClickEvent = function () {
-      var element, container_elements;
+      var container_elements = this.parentNode.getElementsByClassName("sub_container");
 
-      container_elements = this.parentNode.getElementsByClassName("sub_container");
-      for (element in container_elements) {
-        if (container_elements[element].className) {
-          container_elements[element].ToggleClass("hidden");
-        }
+      for (var i = 0, il = container_elements.length; i < il; i++) {
+        container_elements[i].ToggleClass("hidden");
       }
     };
     this.AddEventToClassName("tagbox", "click", ClickEvent);
@@ -101,32 +96,31 @@ var COMP = {
     var steps = header_count - min_headers;
     var tagboxes = document.getElementsByClassName("tagbox");
     // Get fade array of red to green
+
     var color_array = this.GetFadeArray("C90A40", "A7E800", steps || 1);
 
-    for (var box_count in tagboxes) {
-      tagbox = tagboxes[box_count];
-      if (tagbox.parentNode) {
-        //header_list = tagbox.children[2];
-        header_list = tagbox.getElementsByClassName("header_list")[0];
-        //code_children = header_list.children.length - 1;
-        code_children = header_list.getElementsByTagName("code").length;
+    for (var i = 0, il = tagboxes.length; i < il; i++) {
+      tagbox = tagboxes[i];
+      //header_list = tagbox.children[2];
+      header_list = tagbox.getElementsByClassName("header_list")[0];
+      //code_children = header_list.children.length - 1;
+      code_children = header_list.getElementsByTagName("code").length;
 
-        // Handle pages with only one result
-        if (min_headers === header_count) {
-          new_color = color_array[1];
-        }
-        else {
-          new_color = color_array[code_children - min_headers];
-        }
-        tagbox.style.border = "2px solid #"+new_color;
-      // Draw thread-lines to visually follow element flow
-      /*
+      // Handle pages with only one result
+      if (min_headers === header_count) {
+        new_color = color_array[1];
+      }
+      else {
+        new_color = color_array[code_children - min_headers];
+      }
+      tagbox.style.border = "2px solid #"+new_color;
+    // Draw thread-lines for visual element flow
+    /*
         if (tagbox.parentNode.getElementsByClassName("sub_container").length != 0 ||
               tagbox.parentNode.parentNode.id == "container") {
           tagbox.parentNode.style.borderLeft = "1px dotted #F4EBC3";
         }
         */
-      }
     }
   }
 };
