@@ -255,7 +255,7 @@ AgentServer.prototype.RenderPage = function (page_name, response_object) {
       jade.renderFile("plates/error.jade",
       {
         locals: {
-          error_message: "A nondescript error occurred."
+          error_message: "There was a problem parsing the requested URL."
         }
       },
       function (err, html) {
@@ -323,7 +323,7 @@ AgentServer.prototype.StartServer = function () {
     var post_url, AS;
     var post_data = "";
     // Daring Fireball URL regex
-    var url_regex = /\b(([\w-]+:\/\/?|www[.])[^\s()<>]+(?:\([\w\d]+\)|([^[:punct:]\s]|\/)))/i;
+    var url_regex = /\b(([\w-]+:\/\/{1})[^\s()<>]+(?:\([\w\d]+\)|([^[:punct:]\s]|\/)))/i;
 
     // Render index request
     if (request.method === "GET") {
