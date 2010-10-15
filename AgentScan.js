@@ -303,8 +303,8 @@ AgentServer.prototype.RenderPage = function (page_name, response_object) {
         }
       }
       
-      // Return 404 if not static or index
       else {
+        // Return 404 if not static or index
         if (this.static_cache["404"]) {
           ReturnPage(response_object, this.static_cache["404"], 404, "text/html");
         }
